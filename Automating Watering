@@ -101,6 +101,7 @@ void loop()
     lcd.setCursor(6, 0);
     digitalWrite(relePompaPin, LOW);
     lcd.print("OFF");
+    i++;
   }
   else
   {
