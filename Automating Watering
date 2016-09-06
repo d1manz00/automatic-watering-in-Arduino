@@ -1,0 +1,133 @@
+#include <Thread.h>
+#include<DHT.h>
+#include<LiquidCrystal.h>
+#include <iarduino_RTC.h>
+
+Thread PolivThread = Thread();
+Thread lcdtimeThread = Thread();
+Thread WaterThread = Thread();
+
+#define DHTPIN A3 
+#define DHTTYPE DHT22  
+
+DHT dht(DHTPIN, DHTTYPE);
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+iarduino_RTC time(RTC_DS1302, 10, 13, 12);
+
+int ButtonPin = A0;
+int sensorPin = A1;
+int LightSensorPin = A2;
+
+int relePompaPin = 0;
+int releLightPin = 1;
+
+
+void setup() {
+  pinMode(relePompaPin, OUTPUT);
+  pinMode (releLightPin, OUTPUT);
+
+  lcd.begin(16, 2);
+  dht.begin();
+  time.begin();
+
+  PolivThread.onRun(Poliv);
+  PolivThread.setInterval(216000000);
+
+  lcdtimeThread.onRun(lcdtime);
+  lcdtimeThread.setInterval(1000);
+
+  WaterThread.onRun(Water);
+  WaterThread.setInterval(3600000);
+
+  lcd.setCursor(0, 0);
+  lcd.print("Poliv:OFF");
+}
+
+void Water()
+{
+  lcd.setCursor(13, 1);
+  digitalWrite(sensorPin, HIGH);
+  delay(1000);
+  lcd.print(analogRead(sensorPin));
+  digitalWrite(sensorPin, LOW);
+}
+
+void lcdtime() {
+  float t = dht.readTemperature();
+  lcd.setCursor(0, 1);
+  lcd.print(t);
+  lcd.setCursor(4, 1);
+  lcd.print("*C");
+  lcd.setCursor(7,1);
+  lcd.print(time.gettime("H:i"));
+  
+  int light = analogRead(LightSensorPin);
+  if (light < 300)
+  {
+    lcd.setCursor(10, 0);
+    lcd.print("*ON");
+    digitalWrite(releLightPin, HIGH);
+    delay(2000);
+  }
+  else
+  {
+    lcd.setCursor(10, 0);
+    lcd.print("*OFF");    
+    digitalWrite(releLightPin, LOW);
+  }
+}
+
+void loop()
+{
+  if (PolivThread.shouldRun())
+  PolivThread.run();
+
+  if (lcdtimeThread.shouldRun())
+  lcdtimeThread.run();
+  
+  if (WaterThread.shouldRun())
+  WaterThread.run();
+
+  int i = 0;
+  if (i < 1)
+  {
+    int Water = analogRead(sensorPin);
+  if (Water < 200)
+  {
+    digitalWrite(relePompaPin, HIGH);
+    lcd.setCursor(0, 0);
+    lcd.print("Poliv:ON ");
+    delay(10000);
+    lcd.setCursor(6, 0);
+    digitalWrite(relePompaPin, LOW);
+    lcd.print("OFF");
+  }
+  else
+  {
+    lcd.setCursor(0, 0);
+    digitalWrite(relePompaPin, LOW);
+    lcd.print("Poliv:OFF");
+  }
+  }
+}
+
+void Poliv()
+{
+  int Water = analogRead(sensorPin);
+  if (Water < 200)
+  {
+    digitalWrite(relePompaPin, HIGH);
+    lcd.setCursor(0, 0);
+    lcd.print("Poliv:ON ");
+    delay(10000);
+    lcd.setCursor(6, 0);
+    digitalWrite(relePompaPin, LOW);
+    lcd.print("OFF");
+  }
+  else
+  {
+    lcd.setCursor(0, 0);
+    digitalWrite(relePompaPin, LOW);
+    lcd.print("Poliv:OFF");
+  }
+}
