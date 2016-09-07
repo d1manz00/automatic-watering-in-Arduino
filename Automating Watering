@@ -9,7 +9,7 @@ Thread WaterThread = Thread();
 
 #define DHTPIN A3 
 #define DHTTYPE DHT22  
-
+  
 DHT dht(DHTPIN, DHTTYPE);
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 iarduino_RTC time(RTC_DS1302, 10, 13, 12);
@@ -31,7 +31,7 @@ void setup() {
   time.begin();
 
   PolivThread.onRun(Poliv);
-  PolivThread.setInterval(216000000);
+  PolivThread.setInterval(86400000);
 
   lcdtimeThread.onRun(lcdtime);
   lcdtimeThread.setInterval(1000);
@@ -45,8 +45,11 @@ void setup() {
 
 void Water()
 {
+  digitalWrite(releLightPin, HIGH);
+  delay(500);
   lcd.setCursor(13, 1);
   lcd.print(analogRead(sensorPin));
+  digitalWrite(releLightPin, LOW);
 }
 
 void lcdtime() {
@@ -63,13 +66,13 @@ void lcdtime() {
   {
     lcd.setCursor(10, 0);
     lcd.print("*OFF");
-    digitalWrite(releLightPin, LOW);
+   // digitalWrite(releLightPin, LOW);
   }
   else
   {
     lcd.setCursor(10, 0);
     lcd.print("*ON ");    
-    digitalWrite(releLightPin, HIGH);
+   // digitalWrite(releLightPin, HIGH);
   }
 }
 
@@ -86,9 +89,15 @@ void loop()
 
  if (analogRead(A0)<200)
   {
+    digitalWrite(releLightPin, HIGH);
+  delay(1000);
     int Water = analogRead(sensorPin);
-  if (Water < 200)
+  delay(1000);
+      digitalWrite(releLightPin, LOW);
+  if (Water < 600)
   {
+      lcd.setCursor(13, 1);
+  lcd.print(analogRead(sensorPin));
     digitalWrite(relePompaPin, HIGH);
     lcd.setCursor(0, 0);
     lcd.print("Poliv:ON ");
@@ -105,17 +114,22 @@ void loop()
     lcd.print("Poliv:OFF");
   }
   }
+  digitalWrite(relePompaPin, LOW);
 }
 
 void Poliv()
 {
-  int Water = analogRead(sensorPin);
-  if (Water < 60)
+  digitalWrite(releLightPin, HIGH);
+  delay(1000);
+  int Water = analogRead(A1);
+  delay(1000);
+  digitalWrite(releLightPin, LOW);
+  if (Water < 600)
   {
     digitalWrite(relePompaPin, HIGH);
     lcd.setCursor(0, 0);
     lcd.print("Poliv:ON ");
-    delay(10000);
+    delay(7000);
     lcd.setCursor(6, 0);
     digitalWrite(relePompaPin, LOW);
     lcd.print("OFF");
