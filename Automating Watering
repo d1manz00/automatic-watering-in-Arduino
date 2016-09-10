@@ -21,7 +21,6 @@ int LightSensorPin = A2;
 int relePompaPin = 0;
 int releLightPin = 1;
 
-
 void setup() {
   pinMode(relePompaPin, OUTPUT);
   pinMode (releLightPin, OUTPUT);
@@ -45,11 +44,8 @@ void setup() {
 
 void Water()
 {
-  digitalWrite(releLightPin, HIGH);
-  delay(500);
   lcd.setCursor(13, 1);
   lcd.print(analogRead(sensorPin));
-  digitalWrite(releLightPin, LOW);
 }
 
 void lcdtime() {
@@ -89,11 +85,8 @@ void loop()
 
  if (analogRead(A0)<200)
   {
-    digitalWrite(releLightPin, HIGH);
-  delay(1000);
     int Water = analogRead(sensorPin);
   delay(1000);
-      digitalWrite(releLightPin, LOW);
   if (Water < 600)
   {
       lcd.setCursor(13, 1);
@@ -105,7 +98,6 @@ void loop()
     lcd.setCursor(6, 0);
     digitalWrite(relePompaPin, LOW);
     lcd.print("OFF");
-    
   }
   else
   {
@@ -119,11 +111,9 @@ void loop()
 
 void Poliv()
 {
-  digitalWrite(releLightPin, HIGH);
-  delay(1000);
+ 
   int Water = analogRead(A1);
   delay(1000);
-  digitalWrite(releLightPin, LOW);
   if (Water < 600)
   {
     digitalWrite(relePompaPin, HIGH);
@@ -141,3 +131,4 @@ void Poliv()
     lcd.print("Poliv:OFF");
   }
 }
+
