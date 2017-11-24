@@ -1,43 +1,55 @@
-//По возможности постараюсь писать комментарии на английском
 #include <Thread.h> //библиотека для multiprocessing
 #include<DHT.h> //DHT22 librairy
-#include<LiquidCrystal.h> //LCD librairy
-#include <iarduino_RTC.h> //Real Time Clock librairy
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h> 
+#include <Adafruit_Sensor.h>
 
 Thread PolivThread = Thread(); //Создаём потоки //Для полива
 Thread lcdtimeThread = Thread(); //для отоброжения информации на экране
 Thread WaterThread = Thread(); //Для отображения влажности на экране
 
-#define DHTPIN A3 //как и const! объявляем константы
-#define DHTTYPE DHT22  
+#define DHTPIN 13 //как и const! объявляем константы
+#define DHTTYPE DHT11
   
 DHT dht(DHTPIN, DHTTYPE); //показываем ардуино, куда подключен датчик
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7); //экран
-iarduino_RTC time(RTC_DS1302, 10, 13, 12); // Часы Реального Времени
 
-int ButtonPin = A0; //кнопки на шилде
-int sensorPin = A1; //Датчик влажности почвы
-int LightSensorPin = A2; //датчик освещения 
 
-int relePompaPin = 0; //реле для помпы
-int releLightPin = 1; //реле для светодиодной ленты
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
+
+int sensorPin = A15; //Датчик влажности почвы
+int LightSensorPin = A14; //датчик освещения 
+
+int relePompaPin = 8; //реле для помпы
+int releLightPin = 9; //реле для светодиодной ленты
+int releSensorPin = 7; //реле для датчика влажности почвы
 
 void setup() {
+  
   pinMode(relePompaPin, OUTPUT); //обозначаем выходы
   pinMode (releLightPin, OUTPUT);
-
-  lcd.begin(16, 2); //запускаем ЛСД
-  dht.begin(); //Starting DHT22
-  time.begin(); //Starting RTC 
+  pinMode (releSensorPin, OUTPUT);
+  
+  pinMode (52, OUTPUT);
+  pinMode (50, OUTPUT);
+  pinMode (13, OUTPUT);
+  digitalWrite (52, HIGH);
+  digitalWrite (50, HIGH);
+  digitalWrite (13, HIGH);
+  
+  lcd.init();                     
+  lcd.backlight();
+  lcd.println ("Hello!)");
+  
+  dht.begin(); //Starting DHT22 time.begin(); //Starting RTC 
 
   PolivThread.onRun(Poliv); //Назначаем потоку задачу
-  PolivThread.setInterval(86400000); //интервал срабатывания потока (2,5 дня)
+  PolivThread.setInterval(7000); //интервал срабатывания потока (2,5 дня)
 
   lcdtimeThread.onRun(lcdtime);
   lcdtimeThread.setInterval(1000); //секунда
 
   WaterThread.onRun(Water);
-  WaterThread.setInterval(3600000); //час
+  WaterThread.setInterval(1000); //час
 
   lcd.setCursor(0, 0);
   lcd.print("Poliv:OFF"); //выводим на ЛСД начальную информацию
@@ -45,8 +57,12 @@ void setup() {
 
 void Water() //здесь выводим на ЛСД влажность почвы
 {
+  digitalWrite (releSensorPin, HIGH);
+  delay (1000);
   lcd.setCursor(13, 1);
   lcd.print(analogRead(sensorPin));
+  delay (500);
+  digitalWrite (releSensorPin, LOW);
 }
 
 void lcdtime() 
@@ -56,8 +72,6 @@ void lcdtime()
   lcd.print(t);  //выводим на экран
   lcd.setCursor(4, 1);
   lcd.print("*C");
-  lcd.setCursor(7,1); //выводим на ЛСД время
-  lcd.print(time.gettime("H:i"));
   
   int light = analogRead(LightSensorPin); //считываем показания датчика освещения
   if (light < 300)
@@ -85,19 +99,25 @@ void loop()
   if (WaterThread.shouldRun())
   WaterThread.run();
 
- if (analogRead(ButtonPin)<200) //считываем нажатие кнопки
+
+}
+
+void Poliv()
+{
+  digitalWrite (releSensorPin, HIGH);
+  delay (500);
+  int Water = analogRead(sensorPin); //всё тоже самое, что и в water
+   delay (500);
+  digitalWrite (releSensorPin, LOW);
+  
+  if (Water < 300)
   {
-  int Water = analogRead(sensorPin); //записываем в переменную показания датчика
-  if (Water < 600)
-  {
-    lcd.setCursor(13, 1);
-    lcd.print(analogRead(sensorPin)); //Открываем реле, пишем, что полив идёт, ждём 13 сек. Закрываем реле, пишем, что полив отключён
-    digitalWrite(relePompaPin, HIGH);
+    digitalWrite(relePompaPin, 1);
     lcd.setCursor(0, 0);
     lcd.print("Poliv:ON ");
-    delay(13000);
+    delay(2000);
     lcd.setCursor(6, 0);
-    digitalWrite(relePompaPin, LOW);
+    digitalWrite(relePompaPin,0);
     lcd.print("OFF");
   }
   else
@@ -106,22 +126,127 @@ void loop()
     digitalWrite(relePompaPin, LOW);
     lcd.print("Poliv:OFF");
   }
+}
+  #include <Thread.h> //библиотека для multiprocessing
+#include<DHT.h> //DHT22 librairy
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h> 
+#include <Adafruit_Sensor.h>
+
+Thread PolivThread = Thread(); //Создаём потоки //Для полива
+Thread lcdtimeThread = Thread(); //для отоброжения информации на экране
+Thread WaterThread = Thread(); //Для отображения влажности на экране
+
+#define DHTPIN 13 //как и const! объявляем константы
+#define DHTTYPE DHT11
+  
+DHT dht(DHTPIN, DHTTYPE); //показываем ардуино, куда подключен датчик
+
+
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
+
+int sensorPin = A15; //Датчик влажности почвы
+int LightSensorPin = A14; //датчик освещения 
+
+int relePompaPin = 8; //реле для помпы
+int releLightPin = 9; //реле для светодиодной ленты
+int releSensorPin = 7; //реле для датчика влажности почвы
+
+void setup() {
+  
+  pinMode(relePompaPin, OUTPUT); //обозначаем выходы
+  pinMode (releLightPin, OUTPUT);
+  pinMode (releSensorPin, OUTPUT);
+  
+  pinMode (52, OUTPUT);
+  pinMode (50, OUTPUT);
+  pinMode (13, OUTPUT);
+  digitalWrite (52, HIGH);
+  digitalWrite (50, HIGH);
+  digitalWrite (13, HIGH);
+  
+  lcd.init();                     
+  lcd.backlight();
+  lcd.println ("Hello!)");
+  
+  dht.begin(); //Starting DHT22 time.begin(); //Starting RTC 
+
+  PolivThread.onRun(Poliv); //Назначаем потоку задачу
+  PolivThread.setInterval(7000); //интервал срабатывания потока (2,5 дня)
+
+  lcdtimeThread.onRun(lcdtime);
+  lcdtimeThread.setInterval(1000); //секунда
+
+  WaterThread.onRun(Water);
+  WaterThread.setInterval(1000); //час
+
+  lcd.setCursor(0, 0);
+  lcd.print("Poliv:OFF"); //выводим на ЛСД начальную информацию
+}
+
+void Water() //здесь выводим на ЛСД влажность почвы
+{
+  digitalWrite (releSensorPin, HIGH);
+  delay (1000);
+  lcd.setCursor(13, 1);
+  lcd.print(analogRead(sensorPin));
+  delay (500);
+  digitalWrite (releSensorPin, LOW);
+}
+
+void lcdtime() 
+  {
+  float t = dht.readTemperature(); //записываем температуру в t
+  lcd.setCursor(0, 1);
+  lcd.print(t);  //выводим на экран
+  lcd.setCursor(4, 1);
+  lcd.print("*C");
+  
+  int light = analogRead(LightSensorPin); //считываем показания датчика освещения
+  if (light < 300)
+  {
+    lcd.setCursor(10, 0); //не понимаю почему, но это работает как надо.. Странно
+    lcd.print("*OFF");
+    digitalWrite(releLightPin, LOW); //Мы ЗАКРЫВАЕМ реле, если яркость меньше 300.. 
   }
-  digitalWrite(relePompaPin, LOW); //на всякий случай, иначе при запуске ардуино реле открыты
+  else
+  {
+    lcd.setCursor(10, 0);
+    lcd.print("*ON ");    //А если больше, ОТКРЫВАЕМ
+    digitalWrite(releLightPin, HIGH); //и это работает ПРАВИЛЬНО
+  }
+}
+
+void loop()
+{
+  if (PolivThread.shouldRun()) //проверяем, пришло ли время запуститься скрипту
+  PolivThread.run(); //если да - запускаем 
+
+  if (lcdtimeThread.shouldRun())
+  lcdtimeThread.run();
+  
+  if (WaterThread.shouldRun())
+  WaterThread.run();
+
+
 }
 
 void Poliv()
 {
- 
+  digitalWrite (releSensorPin, HIGH);
+  delay (500);
   int Water = analogRead(sensorPin); //всё тоже самое, что и в water
-  if (Water < 600)
+   delay (500);
+  digitalWrite (releSensorPin, LOW);
+  
+  if (Water < 300)
   {
-    digitalWrite(relePompaPin, HIGH);
+    digitalWrite(relePompaPin, 1);
     lcd.setCursor(0, 0);
     lcd.print("Poliv:ON ");
-    delay(13000);
+    delay(2000);
     lcd.setCursor(6, 0);
-    digitalWrite(relePompaPin, LOW);
+    digitalWrite(relePompaPin,0);
     lcd.print("OFF");
   }
   else
