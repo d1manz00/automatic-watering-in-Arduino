@@ -5,11 +5,12 @@
 #include <Adafruit_Sensor.h>
 #include <Servo.h>
 
-Thread PolivThread = Thread(); //Создаём потоки //Для полива
+//создаём потоки
+Thread PolivThread = Thread();  //Для полива
 Thread lcdtimeThread = Thread(); //для отоброжения информации на экране
 Thread WaterThread = Thread(); //Для отображения влажности на экране
 
-#define DHTPIN 13 //как и const! объявляем константы
+#define DHTPIN 13 // объявляем константы
 #define DHTTYPE DHT11
   
 DHT dht(DHTPIN, DHTTYPE); //показываем ардуино, куда подключен датчик
@@ -35,12 +36,13 @@ void setup() {
   lcd.backlight();
   lcd.println ("Hello!)");
   
-  dht.begin(); //Starting DHT22 time.begin(); //Starting RTC 
+  dht.begin(); //Starting DHT22
+  time.begin(); //Starting RTC 
   servo.attach(13);
   servo.write(0);
   
   PolivThread.onRun(Poliv); //Назначаем потоку задачу
-  PolivThread.setInterval(7000); //интервал срабатывания потока (2,5 дня)
+  PolivThread.setInterval(7000); //интервал срабатывания потока
 
   lcdtimeThread.onRun(lcdtime);
   lcdtimeThread.setInterval(1000); //секунда
@@ -74,15 +76,15 @@ void lcdtime()
   int light = analogRead(LightSensorPin); //считываем показания датчика освещения
   if (light < 300)
   {
-    lcd.setCursor(10, 0); //не понимаю почему, но это работает как надо.. Странно
+    lcd.setCursor(10, 0)
     lcd.print("*OFF");
     digitalWrite(releLightPin, LOW); //Мы ЗАКРЫВАЕМ реле, если яркость меньше 300.. 
   }
   else
   {
     lcd.setCursor(10, 0);
-    lcd.print("*ON ");    //А если больше, ОТКРЫВАЕМ
-    digitalWrite(releLightPin, HIGH); //и это работает ПРАВИЛЬНО
+    lcd.print("*ON ");   
+    digitalWrite(releLightPin, HIGH); 
   }
 }
 
